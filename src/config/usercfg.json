@@ -1,0 +1,49 @@
+{
+    "Auto Breath": false,
+    "Auto Blink": false,
+    "ModelList": {
+        "vtuber cheetah  2": {
+            "FullPath": "model/vtuber cheetah  2/vtuber cheetah  2.model3.json",
+            "model3": "vtuber cheetah  2.model3.json",
+            "extensions": {
+                "expressions": [
+                    "blush hard.exp3.json",
+                    "cheekpuff left.exp3.json",
+                    "cheekpuff right.exp3.json",
+                    "fck.exp3.json",
+                    "hair v2.exp3.json",
+                    "hat.exp3.json",
+                    "jacket off.exp3.json",
+                    "lean.exp3.json",
+                    "love.exp3.json",
+                    "mad.exp3.json",
+                    "shirt v2.exp3.json",
+                    "sticker.exp3.json",
+                    "tongue.exp3.json",
+                    "tsundere.exp3.json",
+                    "white eye.exp3.json",
+                    "wow.exp3.json"
+                ],
+                "motions": [
+                    "cry.motion3.json"
+                ]
+            }
+        }
+    },
+    "keyboard": {},
+    "assets": [
+        "Assets/background.jpg"
+    ],
+    "aplication": {
+        "CapFPS": {
+            "capFps": true,
+            "CapFpsValue": 30
+        },
+        "display": [
+            800,
+            900
+        ],
+        "background": "media/Assets/background.jpg",
+        "model": "vtuber cheetah  2"
+    }
+}
