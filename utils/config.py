@@ -25,9 +25,7 @@ class Config:
     def user(self):
         """Load user config safely."""
         try:
-            with open(
-                resource_path("Media/Config/config.json"), "r", encoding="utf-8"
-            ) as file:
+            with open("Media/Config/config.json", "r", encoding="utf-8") as file:
                 return json.load(file)
         except FileNotFoundError as e:
             self.logger.LogExit("recv", e)
