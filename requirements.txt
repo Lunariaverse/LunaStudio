@@ -1,8 +1,9 @@
+cv2_enumerate_cameras==1.2.1
 live2d_py==0.5.3.4
 mediapipe==0.10.21
 numpy==2.3.1
 opencv_contrib_python==4.11.0.86
 opencv_python==4.11.0.86
-Pillow==11.2.1
+Pillow==11.3.0
 pygame==2.6.1
 PyOpenGL==3.1.9

@@ -1,0 +1,10 @@
+{
+  "Auto Breath": false,
+  "Auto Blink": false,
+  "CapFPS": {
+    "capFps": true,
+    "CapFpsValue": 30
+  },
+  "display": [800, 900],
+  "background": "background.jpg"
+}

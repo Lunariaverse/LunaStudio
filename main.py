@@ -1,154 +1,97 @@
-from src import (
-    Constract,
-    Config,
-    resource_path,
-    Mediapipe,
-    Image,
-    Params,
-    setup_logger,
-)
-from live2d.v3.params import StandardParams
-from collections import namedtuple
-import live2d.v3 as live2d
-from pathlib import Path
-import threading
-import pygame
-import shutil
-import sys
 import os
+import sys
 import time
-import traceback
+import shutil
+import threading
+from pathlib import Path
+from collections import namedtuple
 
+import pygame
+import live2d.v3 as live2d
+from live2d.v3.params import StandardParams
 
-class Notification:
-    _font = None
-
-    def __init__(self):
-        self.logger = setup_logger("Notification")
-
-    def create(
-        self,
-        caption,
-        text,
-        width=400,
-        padding=20,
-        bg_color=(30, 30, 30),
-        text_color=(255, 255, 255),
-        font_size=28,
-    ):
-        try:
-            pygame.init()
-            if not Notification._font:
-                Notification._font = pygame.font.SysFont(None, font_size)
-
-            font = Notification._font
-            lines = text.split("\n")
-            line_height = font.get_height()
-            height = line_height * len(lines) + padding * 2
-            icon = pygame.image.load(resource_path("src/media/LunaStudio.png"))
-            pygame.display.set_icon(icon)
-            screen = pygame.display.set_mode((width, height))
-            pygame.display.set_caption(caption)
-
-            running = True
-            clock = pygame.time.Clock()
-
-            while running:
-                screen.fill(bg_color)
-
-                for idx, line in enumerate(lines):
-                    text_surface = font.render(line, True, text_color)
-                    text_rect = text_surface.get_rect(
-                        center=(
-                            width // 2,
-                            padding + idx * line_height + line_height // 2,
-                        )
-                    )
-                    screen.blit(text_surface, text_rect)
-
-                pygame.display.flip()
-
-                for event in pygame.event.get():
-                    if event.type == pygame.QUIT:
-                        running = False
-                        Live2DApp._close()
-                        pygame.quit()
-                        sys.exit()
-
-                clock.tick(30)
-        except Exception as e:
-            self.logger.error(f"[ERROR] Notification failed: {e}")
-            traceback.print_exc()
+from utils import Notification, Constract, Config, Logger, resource_path
+from render import Mediapipe, Image, Params
 
 
 class Live2DApp:
     def __init__(self):
-        self.logger = setup_logger("Live2DApp")
+        self.logger = Logger("Live2DApp")
         self.config = Config()
         self.config_data = {}
+        self.config_internal = {}
         self.model = None
         self.params = Params()
         self.background = None
         self.display_size = None
-        self.running = False
         self._capture_started = False
+        self.mediapipe = Mediapipe(app=self)
+        self.running = False
 
     def app_init(self):
         try:
-            folders = ["media", "media/model", "media/Assets"]
-            created = False
-            for folder in folders:
-                if not os.path.exists(folder):
-                    os.makedirs(folder)
-                    created = True
-                    if folder == "media/Assets":
-                        shutil.copy(
-                            resource_path("src/media/background.jpg"),
-                            "media/Assets/background.jpg",
-                        )
-
-            if created:
-                Notification().create(
-                    caption="LunaStudio | Setup Required",
-                    text="Folders created. Please add your model to 'media/model'\nand restart the program.",
-                    width=600,
-                )
-                self._close()
-                sys.exit()
-
-            contract = Constract()
-            if not contract.check():
-                Notification().create(
-                    caption="LunaStudio | Setup Required",
-                    text="No models found.\nPlease add your model first to 'media/model'\nand restart the program.",
-                    width=600,
-                )
-                self._close()
-                sys.exit()
-            else:
-                contract.start()
-                self.config_data = self.config.recv()
-
+            self._setup_directories()
+            self._check_contract()
+            self.config_data = self.config.user()
+            self.config_internal = self.config.recv()
             self._init_pygame()
             self._init_live2d()
-
         except Exception as e:
-            self.logger.error(f"[app_init] Failed to initialize app: {e}")
-            traceback.print_exc()
+            self.logger.LogExit("app_init", e)
+            sys.exit()
+
+    def _setup_directories(self):
+        folders = ["Media", "Media/Model", "Media/Assets", "Media/Config"]
+        copy_files = [
+            (resource_path("Assets/config.json"), "Media/Config/config.json"),
+            (resource_path("Assets/background.jpg"), "Media/Assets/background.jpg"),
+        ]
+
+        created = False
+        for folder in folders:
+            if not os.path.exists(folder):
+                os.makedirs(folder)
+                created = True
+
+        for src, dst in copy_files:
+            shutil.copy(src, dst)
+
+        if created:
+            Notification().create(
+                caption="LunaStudio | Setup Required",
+                text="Folders created. Please add your model to 'Media/Model'\nand restart the program.",
+                width=600,
+            )
             self._close()
             sys.exit()
 
+    def _check_contract(self):
+        contract = Constract()
+        if not contract.check():
+            Notification().create(
+                caption="LunaStudio | Setup Required",
+                text="No models found.\nPlease add your model first to 'Media/Model'\nand restart the program.",
+                width=600,
+            )
+            self._close()
+            sys.exit()
+        contract.start()
+
     def _init_pygame(self):
-        point = namedtuple("point", ["x", "y"])
-        self.display_size = point(*self.config_data["aplication"]["display"])
+        try:
+            point = namedtuple("Point", ["x", "y"])
+            self.display_size = point(*self.config_data["display"])
 
-        pygame.init()
-        pygame.display.set_mode(self.display_size, pygame.DOUBLEBUF | pygame.OPENGL)
-        pygame.display.set_caption("LunaStudio | By Lunaria & Comunity")
+            pygame.init()
+            pygame.display.set_mode(self.display_size, pygame.DOUBLEBUF | pygame.OPENGL)
+            pygame.display.set_caption("LunaStudio | By Lunaria & Community")
 
-        self.background = Image(self.config_data["aplication"]["background"])
-        icon = pygame.image.load(resource_path("src/media/LunaStudio.png"))
-        pygame.display.set_icon(icon)
+            self.background = Image(f"Media/Assets/{self.config_data['background']}")
+            icon = pygame.image.load(resource_path("Assets/LunaStudio.png"))
+            pygame.display.set_icon(icon)
+        except Exception as e:
+            self.logger.LogExit("_init_pygame", e)
+            sys.exit()
 
     def _init_live2d(self):
         try:
@@ -157,16 +100,14 @@ class Live2DApp:
             live2d.glInit()
             self._load_model()
         except Exception as e:
-            self.logger.error(f"[_init_live2d] Live2D initialization failed: {e}")
-            traceback.print_exc()
-            self._close()
+            self.logger.LogExit("_init_live2d", e)
             sys.exit()
 
     def _load_model(self):
         try:
-            model_list = self.config_data.get("ModelList", {})
-            first_key = next(iter(model_list))
-            full_path = Path("media") / model_list[first_key]["FullPath"]
+            model_list = self.config_internal.get("ModelList", {})
+            first_model_key = next(iter(model_list))
+            full_path = Path("media") / model_list[first_model_key]["FullPath"]
 
             self.model = live2d.LAppModel()
             self.model.LoadModelJson(str(full_path))
@@ -174,29 +115,29 @@ class Live2DApp:
             self.model.SetAutoBreathEnable(self.config_data.get("Auto Breath", True))
             self.model.SetAutoBlinkEnable(self.config_data.get("Auto Blink", True))
         except Exception as e:
-            self.logger.error(f"[_load_model] Failed to load Live2D model: {e}")
-            traceback.print_exc()
-            self._close()
+            self.logger.LogExit("_load_model", e)
             sys.exit()
 
     def start_capture(self):
         if not self._capture_started:
             try:
                 threading.Thread(
-                    target=Mediapipe().capture_task,
-                    args=(self.params, 10),
+                    target=self.mediapipe.capture_task,
+                    args=(self.params, 3),
                     name="CaptureThread",
                     daemon=True,
                 ).start()
                 self._capture_started = True
             except Exception as e:
-                self.logger.error(f"[start_capture] Failed to start capture task: {e}")
-                traceback.print_exc()
+                self.logger.LogExit("start_capture", e)
+                sys.exit()
 
     def _update_parameters(self):
         try:
             p, m = self.params, self.model
             p.update_params(p)
+
+            # Facial and body params
             m.SetParameterValue(StandardParams.ParamEyeLOpen, p.EyeLOpen, 1)
             m.SetParameterValue(StandardParams.ParamEyeROpen, p.EyeROpen, 1)
             m.SetParameterValue(StandardParams.ParamMouthOpenY, p.MouthOpenY, 1)
@@ -224,15 +165,14 @@ class Live2DApp:
             m.SetParameterValue("ParamBodyBack", max(0.0, pitch / 30), 1)
             m.SetParameterValue("ParamBodyFront", max(0.0, -pitch / 30), 1)
 
-            m.SetParameterValue("Param14", 1, 1)
+            m.SetParameterValue("Param14", 1, 1)  # Always-on param
         except Exception as e:
-            self.logger.error(f"[_update_parameters] Failed to update parameters: {e}")
-            traceback.print_exc()
+            self.logger.LogExit("_update_parameters", e)
+            sys.exit()
 
     def _handle_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                self.logger.info("[_handle_events] Smooth Close....")
                 self.running = False
 
     def _render_frame(self):
@@ -243,8 +183,8 @@ class Live2DApp:
             self.model.Draw()
             pygame.display.flip()
         except Exception as e:
-            self.logger.error(f"[_render_frame] Failed to render frame: {e}")
-            traceback.print_exc()
+            self.logger.LogExit("_render_frame", e)
+            sys.exit()
 
     def run(self):
         try:
@@ -258,13 +198,13 @@ class Live2DApp:
                 self._update_parameters()
                 self._render_frame()
 
-                if self.config_data["aplication"]["CapFPS"]["capFps"]:
-                    clock.tick(self.config_data["aplication"]["CapFPS"]["CapFpsValue"])
+                if self.config_data["CapFPS"]["capFps"]:
+                    clock.tick(self.config_data["CapFPS"]["CapFpsValue"])
                 else:
                     time.sleep(0.005)
         except Exception as e:
-            self.logger.error(f"[run] Exception in main loop: {e}")
-            traceback.print_exc()
+            self.logger.LogExit("run", e)
+            sys.exit()
         finally:
             self._close()
 
@@ -274,9 +214,8 @@ class Live2DApp:
             live2d.dispose()
             pygame.quit()
         except Exception:
-            traceback.print_exc()
+            sys.exit()
 
 
 if __name__ == "__main__":
-    app = Live2DApp()
-    app.run()
+    Live2DApp().run()

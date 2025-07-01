@@ -1,5 +1,5 @@
-import math
 from typing import Tuple
+import math
 
 
 def clipValue(value: float, min_value: float, max_value: float) -> float:

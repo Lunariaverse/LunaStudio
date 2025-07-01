@@ -1,14 +1,13 @@
 from .config import Config, resource_path
-from .log import setup_logger
+from .log import Logger
 from pathlib import Path
-import json
-import traceback
+import json, sys
 
 
 class Constract:
     def __init__(self):
         self.config = Config()
-        self.logger = setup_logger("Constact")
+        self.logger = Logger("Constact")
         self.dir = "media"
 
     def start(self):
@@ -27,8 +26,8 @@ class Constract:
                 if expressions:
                     self.prepareModel3Json(expressions)
         except Exception as e:
-            print(f"[ERROR] start() failed: {e}")
-            traceback.print_exc()
+            self.logger.LogExit("start", e)
+            raise
 
     def check(self):
         """
@@ -55,16 +54,11 @@ class Constract:
                         ".png",
                     }:
                         assets.append(file.relative_to(self.dir).as_posix())
-            else:
-                self.logger.warning(
-                    f"[assets] Assets folder not found: {assets_folder}"
-                )
             self.config.update(new_data=assets, key="assets")
 
         except Exception as e:
-            self.logger.error(f"[assets] Trying Read Assets File, failed: {e}")
-
-            traceback.print_exc()
+            self.logger.LogExit("assets", e)
+            raise
 
     def prepareModel3Json(self, expressions_list: list):
         """
@@ -80,9 +74,6 @@ class Constract:
             key = next(iter(model_list))
             full_path = model_list[key].get("FullPath")
             if not full_path:
-                self.logger.warning(
-                    f"[prepareModel3Json] No FullPath for model '{key}'"
-                )
                 return
 
             json_path = Path(self.dir) / full_path
@@ -114,10 +105,8 @@ class Constract:
                     json.dump(data, f, indent=4, ensure_ascii=False)
 
         except Exception as e:
-            self.logger.error(
-                f"[prepareModel3Json] Fail Prepareing .model.json, failed: {e}"
-            )
-            traceback.print_exc()
+            self.logger.LogExit("prepareModel3Json", e)
+            raise
 
     def model3Json(self):
         """
@@ -141,7 +130,7 @@ class Constract:
                     "extensions": self.find_related_files(json_file.parent),
                 }
 
-            cfg_path = resource_path("src/config/usercfg.json")
+            cfg_path = resource_path("config/usercfg.json")
             with open(cfg_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
 
@@ -152,9 +141,8 @@ class Constract:
             return True
 
         except Exception as e:
-            self.logger.error(f"[model3Json] model3Json() failed: {e}")
-            traceback.print_exc()
-            return False
+            self.logger.LogExit("model3Json", e)
+            raise
 
     def find_related_files(self, folder: Path):
         """
@@ -169,7 +157,6 @@ class Constract:
                     elif file.suffixes == [".motion3", ".json"]:
                         motions.append(file.relative_to(folder).as_posix())
         except Exception as e:
-            self.logger.error(f"[find_related_files] failed in {folder}: {e}")
-            traceback.print_exc()
-
+            self.logger.LogExit("find_related_files", e)
+            raise
         return {"expressions": expressions, "motions": motions}

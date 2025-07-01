@@ -43,7 +43,6 @@
             800,
             900
         ],
-        "background": "media/Assets/background.jpg",
-        "model": "vtuber cheetah  2"
+        "background": "background.jpg"
     }
 }

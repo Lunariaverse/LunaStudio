@@ -1,11 +1,11 @@
 from .math import euclideanDistance
-from ..utils.log import setup_logger
+from utils import Logger
 import numpy as np
 
 
 class Calculation:
     def __init__(self):
-        self.logger = setup_logger("Calculation")
+        self.logger = Logger("Calculation")
 
     def calculate_eye_openness(self, points):
         """
@@ -21,7 +21,7 @@ class Calculation:
             horizontal = euclideanDistance(points[0], points[3])
             return vertical / horizontal if horizontal != 0 else 0.0
         except Exception as e:
-            self.logger.error(f"[calculate_eye_openness] failed: {e}")
+            self.logger.LogExit("calculate_eye_openness", e)
             return 0.0
 
     def calculate_mouth_openness(self, points):
@@ -39,7 +39,7 @@ class Calculation:
         try:
             return euclideanDistance(points[0], points[1])
         except Exception as e:
-            self.logger.error(f"[calculate_mouth_openness] failed: {e}")
+            self.logger.LogExit("calculate_mouth_form", e)
             return 0.0
 
     def calculate_head_pose(self, points):
@@ -93,7 +93,7 @@ class Calculation:
             return roll_angle, yaw_angle, pitch_angle
 
         except Exception as e:
-            self.logger.error(f"[calculate_head_pose] failed: {e}")
+            self.logger.LogExit("calculate_head_pose", e)
             return 0.0, 0.0, 0.0
 
     def calculate_body_angle_x(self, body_center_x, left_shoulder, right_shoulder):
@@ -113,7 +113,7 @@ class Calculation:
                 else 0.0
             )
         except Exception as e:
-            self.logger.error(f"[calculate_body_angle_x] failed: {e}")
+            self.logger.LogExit("calculate_body_angle_x", e)
             return 0.0
 
     def calculate_eye_ball_x(self, points):
@@ -145,5 +145,5 @@ class Calculation:
 
             return (left_eye_ball_x + right_eye_ball_x) / 2
         except Exception as e:
-            self.logger.error(f"[calculate_eye_ball_x]  failed: {e}")
+            self.logger.LogExit("calculate_eye_ball_x", e)
             return 0.0

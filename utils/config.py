@@ -1,9 +1,5 @@
-from .log import setup_logger
-import traceback
-import threading
-import json
-import sys
-import os
+import traceback, os, threading, json, sys
+from .log import Logger
 
 
 def resource_path(relative_path):
@@ -23,23 +19,36 @@ class Config:
     """
 
     def __init__(self):
-        self.logger = setup_logger("Config")
+        self.logger = Logger("Config")
         self._lock = threading.Lock()
 
-    def recv(self):
+    def user(self):
         """Load user config safely."""
         try:
             with open(
-                resource_path("src/config/usercfg.json"), "r", encoding="utf-8"
+                resource_path("Media/Config/config.json"), "r", encoding="utf-8"
             ) as file:
                 return json.load(file)
-        except FileNotFoundError:
-            self.logger.error(f"[recv] File Not Found")
-            return
+        except FileNotFoundError as e:
+            self.logger.LogExit("recv", e)
+            raise
         except Exception as e:
-            self.logger.error(f"[recv] Failed to load usercfg.json: {e}")
-            traceback.print_exc()
-            return
+            self.logger.LogExit("recv", e)
+            raise
+
+    def recv(self):
+        """Load user config internal safely."""
+        try:
+            with open(
+                resource_path("config/usercfg.json"), "r", encoding="utf-8"
+            ) as file:
+                return json.load(file)
+        except FileNotFoundError as e:
+            self.logger.LogExit("recv", e)
+            raise
+        except Exception as e:
+            self.logger.LogExit("recv", e)
+            raise
 
     def update(self, new_data, key):
         """
@@ -48,7 +57,7 @@ class Config:
         """
         with self._lock:
             try:
-                path = resource_path("src/config/usercfg.json")
+                path = resource_path("config/usercfg.json")
                 if os.path.exists(path):
                     with open(path, "r", encoding="utf-8") as file:
                         data = json.load(file)
@@ -64,29 +73,28 @@ class Config:
                     json.dump(data, file, indent=4)
 
             except Exception as e:
-                self.logger.error(f"[update] Failed to update usercfg.json: {e}")
-                traceback.print_exc()
+                self.logger.LogExit("update", e)
+                raise
 
     def recvParameter(self):
         """Load parameter config safely."""
         try:
             with open(
-                resource_path("src/config/parameter.json"), "r", encoding="utf-8"
+                resource_path("config/parameter.json"), "r", encoding="utf-8"
             ) as file:
                 return json.load(file)
-        except FileNotFoundError:
-            self.logger.error("[recvParameter] parameter.json not found")
+        except FileNotFoundError as e:
+            self.logger.error("recvParameter", e)
             return
         except Exception as e:
-            self.logger.error(f"[recvParameter] Failed to load parameter.json: {e}")
-            traceback.print_exc()
-            return
+            self.logger.LogExit("recvParameter", e)
+            raise
 
     def updateParameter(self, new_data):
         """Update parameter.json (top-level merge)."""
         with self._lock:
             try:
-                path = resource_path("src/config/parameter.json")
+                path = resource_path("config/parameter.json")
                 if os.path.exists(path):
                     with open(path, "r", encoding="utf-8") as file:
                         data = json.load(file)
@@ -96,16 +104,11 @@ class Config:
                 if isinstance(new_data, dict):
                     data.update(new_data)
                 else:
-                    self.logger.warning(
-                        "[updateParameter] new_data is not a dict, skipping update."
-                    )
                     return
 
                 with open(path, "w", encoding="utf-8") as file:
                     json.dump(data, file, indent=4)
 
             except Exception as e:
-                self.logger.error(
-                    f"[updateParameter] Failed to update parameter.json: {e}"
-                )
-                traceback.print_exc()
+                self.logger.LogExit("updateParameter", e)
+                raise
