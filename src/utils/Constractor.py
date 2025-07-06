@@ -1,7 +1,7 @@
 from .config import Config, resource_path
 from .log import Logger
 from pathlib import Path
-import json, sys
+import json
 
 
 class Constract:
@@ -15,7 +15,6 @@ class Constract:
         Initialize assets and model data.
         """
         try:
-            self.assets()
             self.model3Json()
 
             data = self.config.recv()
@@ -38,28 +37,6 @@ class Constract:
             any(model_path.glob("**/*.model3.json")) if model_path.is_dir() else False
         )
 
-    def assets(self):
-        """
-        Scan media/Assets folder for image files and update config["assets"]
-        """
-        try:
-            assets_folder = Path(self.dir) / "Assets"
-            assets = []
-
-            if assets_folder.exists():
-                for file in assets_folder.rglob("*"):
-                    if file.is_file() and file.suffix.lower() in {
-                        ".jpg",
-                        ".jpeg",
-                        ".png",
-                    }:
-                        assets.append(file.relative_to(self.dir).as_posix())
-            self.config.update(new_data=assets, key="assets")
-
-        except Exception as e:
-            self.logger.LogExit("assets", e)
-            raise
-
     def prepareModel3Json(self, expressions_list: list):
         """
         Ensure model3.json includes given expression files under FileReferences.Expressions
@@ -68,7 +45,6 @@ class Constract:
             config_data = self.config.recv()
             model_list = config_data.get("ModelList", {})
             if not model_list:
-                self.logger.warning("[prepareModel3Json] No ModelList in config")
                 return
 
             key = next(iter(model_list))
@@ -78,10 +54,6 @@ class Constract:
 
             json_path = Path(self.dir) / full_path
             if not json_path.is_file():
-                self.logger.warning(
-                    f"[prepareModel3Json] Model3 JSON not found: {json_path}"
-                )
-
                 return
 
             with json_path.open("r", encoding="utf-8") as f:
@@ -115,9 +87,6 @@ class Constract:
         try:
             model_path = Path(self.dir) / "model"
             if not model_path.is_dir():
-                self.logger.warning(
-                    f"[model3Json] Model folder not found: {model_path}"
-                )
                 return False
 
             new_model_list = {}

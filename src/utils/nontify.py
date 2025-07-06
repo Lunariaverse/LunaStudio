@@ -1,8 +1,6 @@
 from .config import resource_path
 from .log import Logger
-import pygame
-import traceback
-import sys
+import pygame, sys
 
 
 class Notification:

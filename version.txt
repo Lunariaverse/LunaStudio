@@ -17,11 +17,11 @@ VSVersionInfo(
         [
           StringStruct('CompanyName', 'Lunaria Community'),
           StringStruct('FileDescription', 'LunaStudio'),
-          StringStruct('FileVersion', '1.0.0'),
+          StringStruct('FileVersion', '1.1.4'),
           StringStruct('InternalName', 'LunaStudio'),
           StringStruct('OriginalFilename', 'LunaStudio.exe'),
           StringStruct('ProductName', 'LunaStudio'),
-          StringStruct('ProductVersion', '1.0.0')
+          StringStruct('ProductVersion', '1.1.4')
         ])
     ]),
     VarFileInfo([VarStruct('Translation', [1033, 1200])])

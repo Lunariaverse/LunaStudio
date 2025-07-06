@@ -1,5 +1,5 @@
 from .math import euclideanDistance
-from utils import Logger
+from ...utils import Logger
 import numpy as np
 
 

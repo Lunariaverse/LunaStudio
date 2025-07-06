@@ -5,7 +5,7 @@ a = Analysis(
     ['main.py'],
     pathex=[],
     binaries=[],
-    datas=[('config', 'config'), ('Assets', 'Assets'), ('render\\face_landmarker.task', 'render')],
+    datas=[('config', 'config'), ('Assets', 'Assets'), ('src\\render\\model', 'src/render/model')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},

@@ -1,4 +1,4 @@
-import traceback, os, threading, json, sys
+import os, threading, json, sys
 from .log import Logger
 
 
@@ -73,20 +73,6 @@ class Config:
             except Exception as e:
                 self.logger.LogExit("update", e)
                 raise
-
-    def recvParameter(self):
-        """Load parameter config safely."""
-        try:
-            with open(
-                resource_path("config/parameter.json"), "r", encoding="utf-8"
-            ) as file:
-                return json.load(file)
-        except FileNotFoundError as e:
-            self.logger.error("recvParameter", e)
-            return
-        except Exception as e:
-            self.logger.LogExit("recvParameter", e)
-            raise
 
     def updateParameter(self, new_data):
         """Update parameter.json (top-level merge)."""
